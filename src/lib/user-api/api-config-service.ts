@@ -1,3 +1,4 @@
+import { customApiProtocol } from '@/lib/ai-providers/custom/config'
 /**
  * 用户 API 配置管理接口
  *
@@ -190,6 +191,9 @@ export async function putUserApiConfig(
 
   const providersToSave = normalizedProviders?.map((provider) => {
     const existing = existingProviders.find((candidate) => candidate.id === provider.id)
+    if (customApiProtocol(provider.id) && existing?.apiKey && existing.baseUrl !== provider.baseUrl && provider.apiKey === undefined) {
+      throw new ApiError('INVALID_PARAMS', { code: 'PROVIDER_ENDPOINT_CHANGE_REQUIRES_KEY', field: 'providers' })
+    }
     let finalApiKey: string | undefined
     if (provider.apiKey === undefined) {
       finalApiKey = existing?.apiKey

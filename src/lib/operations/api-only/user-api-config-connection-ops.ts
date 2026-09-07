@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { customApiProtocol } from '@/lib/ai-providers/custom/config'
 import { testLlmConnection } from '@/lib/ai-exec/llm-test-connection'
 import { testProviderConnection } from '@/lib/ai-exec/provider-test'
 import type { ProjectAgentOperationRegistryDraft } from '@/lib/operations/types'
@@ -65,6 +66,10 @@ export function createUserApiConfigConnectionDiagnosticOperations(): ProjectAgen
         const storedProvider = parsed.apiKey
           ? null
           : await getProviderConfig(ctx.userId, parsed.providerId)
+        if (storedProvider && customApiProtocol(parsed.providerId) && (
+          parsed.apiType !== parsed.providerId.split(':', 1)[0]
+          || (parsed.baseUrl !== undefined && parsed.baseUrl !== storedProvider.baseUrl)
+        )) throw new Error('CUSTOM_API_DIAGNOSTIC_SAVED_ENDPOINT_REQUIRED')
         const payload: Parameters<typeof testProviderConnection>[0] = {
           apiType: parsed.apiType,
           apiKey: parsed.apiKey ?? storedProvider?.apiKey ?? '',

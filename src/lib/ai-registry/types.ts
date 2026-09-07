@@ -11,6 +11,7 @@ export type AiLlmProtocol =
   | 'openai-compatible-chat'
   | 'openrouter-chat'
   | 'google-generative-ai'
+  | 'anthropic-messages'
 
 /** Provider wire verified specifically for Codex custom model providers. */
 export type AiCodexRuntimeWireApi = 'responses'
@@ -579,6 +580,7 @@ function validateLLMCapabilities(issues: CapabilityValidationIssue[], raw: unkno
     'openai-compatible-chat',
     'openrouter-chat',
     'google-generative-ai',
+    'anthropic-messages',
   ]
   if (!allowedProtocols.includes(protocol as AiLlmProtocol)) {
     issues.push(makeAllowedIssue('capabilities.llm.protocol', protocol, allowedProtocols))

@@ -1,3 +1,4 @@
+import { customApiProtocol } from '@/lib/ai-providers/custom/config'
 import type { CustomModel, Provider } from './types'
 import { encodeModelKey, getProviderKey, isPresetComingSoonModelKey } from './types'
 import {
@@ -46,6 +47,8 @@ export function mergeProvidersForDisplay(
     if (matchedPreset) {
       merged.push({
         ...matchedPreset,
+        id: savedProvider.id,
+        name: savedProvider.name,
         hasApiKey: savedProvider.hasApiKey === true,
         baseUrl: savedProvider.baseUrl || matchedPreset.baseUrl,
       })
@@ -61,7 +64,7 @@ export function mergeProvidersForDisplay(
   }
 
   for (const presetProvider of presetProviders) {
-    if (seenPresetKeys.has(presetProvider.id)) continue
+    if (seenPresetKeys.has(presetProvider.id) || customApiProtocol(presetProvider.id)) continue
     merged.push({
       ...presetProvider,
       apiKey: '',

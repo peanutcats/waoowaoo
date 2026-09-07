@@ -155,5 +155,21 @@
   "slotUnset": "Not selected",
   "slotEmpty": "Configure a provider API key below first.",
   "inUse": "In use",
-  "providerModelsCount": "{count} models"
+  "providerModelsCount": "{count} models",
+  "customApi": {
+    "title": "Custom third-party API",
+    "hint": "Choose a protocol, save a connection, add its exact model ID below, then select the model in the slots above.",
+    "connection": "Connection",
+    "add": "Add a connection",
+    "protocol": "Endpoint protocol",
+    "name": "Provider name",
+    "urlHint": "Use an HTTPS API base URL including the required /v1 or /v1beta prefix, or paste the selected protocol’s full generation endpoint. Changing the URL requires re-entering the key.",
+    "invalidUrl": "Use HTTPS without embedded credentials, query parameters or fragments.",
+    "keyRequired": "Enter an API key for a new connection or a changed URL.",
+    "keepKey": "Leave blank to keep the saved key; re-enter it when changing the URL",
+    "saved": "Connection saved. Add the exact model ID below, then select the model above.",
+    "check": "Check saved connection (no generation)",
+    "checkOk": "Model list is reachable. No generation was requested; model and tool support is not verified.",
+    "checkFailed": "Cannot read the model list. Check the URL, key and network. Some compatible services do not expose /models. No generation was requested."
+  }
 }

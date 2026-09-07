@@ -314,6 +314,50 @@ const safeOutboundDispatcher = new Agent({
   },
 })
 
+/** Credential-bearing custom API requests never follow redirects, including 307/308. */
+export const fetchSafeProviderRequest: typeof fetch = async (input, init) => {
+  const url = await assertSafeOutboundMediaUrl(input instanceof Request ? input.url : input)
+  if (url.protocol !== 'https:' || url.searchParams.has('key')) {
+    throw new Error('CUSTOM_API_HTTPS_HEADER_AUTH_REQUIRED')
+  }
+  const requestInit: RequestInitWithDispatcher = {
+    ...init,
+    redirect: 'error',
+    dispatcher: safeOutboundDispatcher,
+  }
+  const response = await fetch(input, requestInit)
+  if (response.ok) return response
+  // A third-party error page may echo credentials. Remove their exact values
+  // before SDK exceptions or application failure records can retain that page.
+  const headers = new Headers(input instanceof Request ? input.headers : undefined)
+  new Headers(init?.headers).forEach((value, key) => headers.set(key, value))
+  const secrets = ['authorization', 'x-api-key', 'x-goog-api-key'].flatMap((name) => {
+    const value = headers.get(name)
+    return value ? [value, value.replace(/^Bearer\s+/i, '')] : []
+  }).filter(Boolean)
+  const reader = response.body?.getReader()
+  let length = 0
+  const chunks: Uint8Array[] = []
+  if (reader) {
+    try {
+      for (;;) {
+        const next = await reader.read()
+        if (next.done) break
+        length += next.value.length
+        if (length > 64 * 1024) throw new Error('CUSTOM_PROVIDER_ERROR_BODY_TOO_LARGE')
+        chunks.push(next.value)
+      }
+    } finally { await reader.cancel().catch(() => undefined) }
+  }
+  const redact = (value: string) => secrets.reduce((text, secret) => text.split(secret).join('[redacted]'), value)
+  const safeHeaders = new Headers()
+  for (const name of ['content-type', 'retry-after', 'x-request-id', 'x-oai-request-id']) {
+    const value = response.headers.get(name)
+    if (value) safeHeaders.set(name, redact(value))
+  }
+  return new Response(redact(Buffer.concat(chunks).toString('utf8')), { status: response.status, headers: safeHeaders })
+}
+
 function redirectHeaders(headers: Headers, from: URL, to: URL): Headers {
   const next = new Headers(headers)
   if (from.origin !== to.origin) {

@@ -1,3 +1,4 @@
+import { customApiProtocol, normalizeCustomApiBaseUrl } from '@/lib/ai-providers/custom/config'
 import { findBuiltinCapabilities } from '@/lib/ai-registry/capabilities-catalog'
 import { ensureAiCatalogsRegistered } from '@/lib/ai-exec/catalog-bootstrap'
 import { resolveLlmRuntimeModel } from '@/lib/ai-exec/llm-runtime'
@@ -98,7 +99,7 @@ async function resolveSelectedAssistantModel(scope: CodexModelGatewayScope) {
   } catch {
     throw new CodexModelGatewayError('ASSISTANT_MODEL_UNSUPPORTED', 422)
   }
-  if (selection.provider !== 'openrouter') {
+  if (selection.provider.split(':', 1)[0] !== 'openrouter' && !customApiProtocol(selection.provider)?.protocol) {
     throw new CodexModelGatewayError(
       'PROVIDER_RESPONSES_UNSUPPORTED',
       422,
@@ -135,6 +136,8 @@ async function resolveSelectedAssistantModel(scope: CodexModelGatewayScope) {
   }
   return {
     selection,
+    providerKey: selection.provider.split(':', 1)[0],
+    providerBaseUrl: customApiProtocol(selection.provider) ? normalizeCustomApiBaseUrl(selection.provider, providerBaseUrl) : providerBaseUrl,
     providerApiKey: providerConfig.apiKey,
     responsesEndpoint: buildResponsesEndpoint(providerBaseUrl),
   }
@@ -146,15 +149,19 @@ export async function resolveCodexModelGatewayUpstream(
   readonly runtimeModelId: string
   readonly modelId: string
   readonly modelKey: string
+  readonly providerKey: string
+  readonly providerBaseUrl: string
   readonly responsesEndpoint: string
   readonly providerApiKey: string
 }> {
   const scope = normalizeCodexModelGatewayScope(scopeValue)
   const resolved = await resolveSelectedAssistantModel(scope)
   return {
-    runtimeModelId: resolveCodexRuntimeModelId(resolved.selection.modelId),
+    runtimeModelId: resolved.providerKey === 'openrouter' ? resolveCodexRuntimeModelId(resolved.selection.modelId) : resolved.selection.modelId,
     modelId: resolved.selection.modelId,
     modelKey: resolved.selection.modelKey,
+    providerKey: resolved.providerKey,
+    providerBaseUrl: resolved.providerBaseUrl,
     responsesEndpoint: resolved.responsesEndpoint,
     providerApiKey: resolved.providerApiKey,
   }
@@ -184,7 +191,7 @@ export async function resolveCodexModelGatewayRuntimeConfig(params: {
   }
   const resolved = await resolveSelectedAssistantModel(scope)
   return {
-    runtimeModelId: resolveCodexRuntimeModelId(resolved.selection.modelId),
+    runtimeModelId: resolved.providerKey === 'openrouter' ? resolveCodexRuntimeModelId(resolved.selection.modelId) : resolved.selection.modelId,
     modelId: resolved.selection.modelId,
     modelKey: resolved.selection.modelKey,
     modelProviderId: CODEX_MODEL_GATEWAY_PROVIDER_ID,

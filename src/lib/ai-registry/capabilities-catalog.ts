@@ -187,6 +187,9 @@ export function findBuiltinCapabilityCatalogEntry(
     }
   }
 
+  // Only providers declaring a protocol template accept arbitrary model IDs.
+  const template = loaded.byProviderKey.get(`${modelType}::${providerKey}::*`)
+  if (template) return { ...template, provider, modelId, capabilities: cloneCapabilities(template.capabilities) }
   return null
 }
 

@@ -1,3 +1,4 @@
+import { customApiProtocol, normalizeCustomApiBaseUrl } from '@/lib/ai-providers/custom/config'
 import { ApiError } from '@/lib/api-errors'
 import { isApiConfigCatalogProviderId } from '@/lib/ai-registry/api-config-catalog'
 import type { StoredProvider } from './api-config-types'
@@ -31,6 +32,7 @@ export function resolveProviderByIdOrKey(
   const exact = providers.find((provider) => provider.id === providerId)
   if (exact) return exact
 
+  if (providerId.includes(':')) return null
   const providerKey = getProviderKey(providerId)
   const candidates = providers.filter((provider) => getProviderKey(provider.id) === providerKey)
   if (candidates.length === 0) return null
@@ -83,10 +85,15 @@ export function normalizeProvidersInput(rawProviders: unknown): StoredProvider[]
       ? normalizeProviderBaseUrl(rawBaseUrl, `providers[${index}].baseUrl`)
       : undefined
 
+    let normalizedBaseUrl = baseUrl
+    if (baseUrl && customApiProtocol(id)) {
+      try { normalizedBaseUrl = normalizeCustomApiBaseUrl(id, baseUrl) }
+      catch { throw new ApiError('INVALID_PARAMS', { code: 'PROVIDER_BASE_URL_INVALID', field: `providers[${index}].baseUrl` }) }
+    }
     normalized.push({
       id,
       name,
-      baseUrl,
+      baseUrl: normalizedBaseUrl,
       apiKey: typeof item.apiKey === 'string' ? item.apiKey.trim() : undefined,
     })
   }

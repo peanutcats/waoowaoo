@@ -103,6 +103,7 @@
     "test:critical": "npm run test:critical:provider && npm run test:critical:task && npm run test:critical:temporal && npm run test:critical:billing && npm run test:critical:billing-concurrency && npm run test:critical:security"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "3.0.116",
     "@ai-sdk/google": "^3.0.22",
     "@ai-sdk/openai": "^3.0.26",
     "@ai-sdk/openai-compatible": "^2.0.62",

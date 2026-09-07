@@ -26,7 +26,7 @@ describe('API config provider registry conformance', () => {
     const modelProviderIds = Array.from(new Set(
       listApiConfigCatalogModels().map((model) => model.provider),
     )).sort()
-    expect(modelProviderIds).toEqual([...catalogProviderIds].sort())
+    expect(modelProviderIds).toEqual(catalogProviders.filter((provider) => !provider.customModels).map((provider) => provider.id).sort())
     expect(AI_PROVIDER_MANIFESTS
       .filter((manifest) => manifest.apiConfig)
       .every((manifest) => Boolean(manifest.platformCredentials)))

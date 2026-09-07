@@ -1,3 +1,8 @@
+import { APICallError } from '@ai-sdk/provider'
+import { customApiProtocol } from '@/lib/ai-providers/custom/config'
+import { createCustomLanguageModel } from '@/lib/ai-providers/custom/language-model'
+import { fetchSafeProviderRequest } from '@/lib/media/outbound-fetch'
+import { bridgeCustomResponses } from './custom-protocol-bridge'
 import { createHash } from 'node:crypto'
 import { readRequestBufferWithLimit } from '@/lib/http/body-limits'
 import { fetchWithProviderProxy } from '@/lib/http/outbound-proxy'
@@ -379,7 +384,7 @@ export async function proxyCodexResponsesRequest(params: {
     userId: scope.userId,
     turnId: activeTurn.turnId,
     runtimeAttempt: activeTurn.attempt,
-    providerKey: 'openrouter',
+    providerKey: upstream.providerKey ?? 'openrouter',
     modelKey: upstream.modelKey,
     requestHash: createHash('sha256')
       .update(body)
@@ -404,7 +409,22 @@ export async function proxyCodexResponsesRequest(params: {
 
   let response: Response
   try {
-    response = await fetchWithProviderProxy(upstream.responsesEndpoint, {
+    const custom = customApiProtocol(upstream.providerKey ?? 'openrouter')
+    if (custom && custom.id !== 'openai-responses') {
+      try {
+        response = await bridgeCustomResponses({
+          model: createCustomLanguageModel({ providerId: custom.id, modelId: upstream.modelId,
+            apiKey: upstream.providerApiKey, baseUrl: upstream.providerBaseUrl }),
+          body: JSON.parse(Buffer.from(body).toString('utf8')) as Record<string, unknown>,
+          scope: JSON.stringify([scope.userId, scope.projectId, upstream.modelKey, upstream.providerBaseUrl]), signal: params.request.signal,
+        })
+      } catch (error) {
+        if (!APICallError.isInstance(error) || !error.statusCode) throw error
+        response = new Response(error.responseBody ?? JSON.stringify({ error: { message: 'Custom provider request failed' } }), {
+          status: error.statusCode, headers: { 'content-type': 'application/json' },
+        })
+      }
+    } else response = await (custom ? fetchSafeProviderRequest : fetchWithProviderProxy)(upstream.responsesEndpoint, {
       method: 'POST',
       headers: {
         Accept: accept,
@@ -421,7 +441,7 @@ export async function proxyCodexResponsesRequest(params: {
       params.request.signal.throwIfAborted()
     }
     const sourceFailure = projectProviderCredentialOwnership(
-      resolveAiProviderAdapter('openrouter').failure.normalize({
+      resolveAiProviderAdapter(upstream.providerKey ?? 'openrouter').failure.normalize({
         error,
         phase: 'submit',
         operation: EXTERNAL_OPERATION.PROVIDER_SUBMIT,
@@ -467,10 +487,10 @@ export async function proxyCodexResponsesRequest(params: {
   })
   let projection: Awaited<ReturnType<typeof projectCodexProviderResponse>>
   try {
-    projection = await projectCodexProviderResponse(response)
+    projection = await projectCodexProviderResponse(response, upstream.providerKey ?? 'openrouter')
   } catch (error: unknown) {
     const sourceFailure = projectProviderCredentialOwnership(
-      resolveAiProviderAdapter('openrouter').failure.normalize({
+      resolveAiProviderAdapter(upstream.providerKey ?? 'openrouter').failure.normalize({
         error,
         phase: 'result',
         operation: EXTERNAL_OPERATION.PROVIDER_SUBMIT,
@@ -517,6 +537,7 @@ export async function proxyCodexResponsesRequest(params: {
   if (projection.failureKind) return projection.response
   const observedResponse = await observeCodexProviderSuccessResponse({
     response: projection.response,
+    providerKey: upstream.providerKey,
     attempt: providerAttempt,
     requestSignal: params.request.signal,
     providerRequestId,
@@ -527,6 +548,7 @@ export async function proxyCodexResponsesRequest(params: {
     modelKey: upstream.modelKey,
     responseStartedAt: providerRequestStartedAt,
   })
+  if (upstream.providerKey && upstream.providerKey !== 'openrouter') return observedResponse
   return attachOpenRouterRealtimeBilling({
     response: observedResponse,
     headerGenerationId,

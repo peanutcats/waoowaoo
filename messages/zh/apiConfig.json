@@ -155,5 +155,21 @@
   "slotUnset": "未选择",
   "slotEmpty": "请先在下方为服务商配置 API Key。",
   "inUse": "使用中",
-  "providerModelsCount": "模型 {count}"
+  "providerModelsCount": "模型 {count}",
+  "customApi": {
+    "title": "自定义第三方 API",
+    "hint": "选择协议，保存服务商连接，然后在下方添加该服务商的实际模型 ID，并在顶部选择使用的模型。",
+    "connection": "连接",
+    "add": "添加新连接",
+    "protocol": "端点协议",
+    "name": "服务商名称",
+    "urlHint": "填写 HTTPS API 基础地址（包含服务商要求的 /v1 或 /v1beta）。也可粘贴所选协议的完整生成端点。更改地址后需重新输入密钥。",
+    "invalidUrl": "地址无效：请使用 HTTPS，且不要在地址中包含用户名、密码、查询参数或片段。",
+    "keyRequired": "新连接或地址变更需要输入 API Key。",
+    "keepKey": "留空保留已保存的密钥；更改地址时必须重新输入",
+    "saved": "连接已保存。请在下方添加实际模型 ID，再在顶部选择模型。",
+    "check": "检查已保存连接（不生成）",
+    "checkOk": "模型列表可访问。未调用生成接口；这不代表所有模型或工具调用均受支持。",
+    "checkFailed": "无法读取模型列表，请核对地址、密钥和网络。部分兼容服务没有 /models；未调用付费生成。"
+  }
 }

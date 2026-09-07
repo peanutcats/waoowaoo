@@ -1,3 +1,4 @@
+import { customApiProviderManifests } from '@/lib/ai-providers/custom/manifest'
 import { arkProviderManifest } from '@/lib/ai-providers/ark/manifest'
 import { elevenLabsProviderManifest } from '@/lib/ai-providers/elevenlabs/manifest'
 import { falProviderManifest } from '@/lib/ai-providers/fal/manifest'
@@ -7,6 +8,7 @@ import { openRouterProviderManifest } from '@/lib/ai-providers/openrouter/manife
 import type { AiProviderManifest } from '@/lib/ai-providers/manifest'
 
 export const CORE_AI_PROVIDER_MANIFESTS = [
+  ...customApiProviderManifests,
   arkProviderManifest,
   elevenLabsProviderManifest,
   falProviderManifest,

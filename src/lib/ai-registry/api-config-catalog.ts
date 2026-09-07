@@ -15,6 +15,7 @@ export interface ApiConfigCatalogProvider {
   baseUrl?: string
   featured: boolean
   connectionTest: boolean
+  customModels?: boolean
   modelTypes: UnifiedModelType[]
 }
 
@@ -58,8 +59,9 @@ export function listApiConfigCatalogProviders(): ApiConfigCatalogProvider[] {
         ...(manifest.apiConfig.baseUrl ? { baseUrl: manifest.apiConfig.baseUrl } : {}),
         featured: isFeaturedApiConfigProvider(manifest.providerKey),
         connectionTest: Boolean(manifest.adapter.connectionTest),
+        customModels: Boolean(manifest.apiConfig.customModels),
         modelTypes: Array.from(new Set(
-          manifest.catalogs.apiConfigModels.map((model) => model.type),
+          [...manifest.catalogs.apiConfigModels.map((model) => model.type), ...(manifest.apiConfig.customModels ?? [])],
         )),
       }]
     : [])

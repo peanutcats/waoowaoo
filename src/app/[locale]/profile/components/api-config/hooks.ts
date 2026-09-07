@@ -41,6 +41,7 @@ interface UseProvidersReturn {
     saveStatus: 'idle' | 'saving' | 'saved' | 'error'
     saveError: ApiConfigSaveError | null
     flushConfig: () => Promise<void>
+    saveCustomProvider: (provider: Provider) => Promise<boolean>
     updateProviderApiKey: (providerId: string, apiKey: string) => void
     reorderProviders: (activeProviderId: string, overProviderId: string) => void
     deleteProvider: (providerId: string) => void
@@ -145,6 +146,21 @@ export function useProviders(): UseProvidersReturn {
         latestWorkflowConcurrencyRef.current = next
         setWorkflowConcurrency(next)
         void performSave({ workflowConcurrency: next })
+    }, [performSave])
+
+    const saveCustomProvider = useCallback(async (provider: Provider): Promise<boolean> => {
+        const previous = latestProvidersRef.current
+        const next = previous.some((item) => item.id === provider.id)
+            ? previous.map((item) => item.id === provider.id ? provider : item)
+            : [...previous, provider]
+        latestProvidersRef.current = next
+        setProviders(next)
+        const saved = await performSave()
+        const settled = saved ? latestProvidersRef.current.map((item) => item.id === provider.id
+            ? { ...item, apiKey: undefined, hasApiKey: provider.hasApiKey } : item) : previous
+        latestProvidersRef.current = settled
+        setProviders(settled)
+        return saved
     }, [performSave])
 
     // 提供商操作
@@ -339,6 +355,7 @@ export function useProviders(): UseProvidersReturn {
         saveStatus,
         saveError,
         flushConfig,
+        saveCustomProvider,
         updateProviderApiKey,
         reorderProviders,
         deleteProvider,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { CustomApiProviderForm } from './CustomApiProviderForm'
 import { useTranslations } from 'next-intl'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { editionClient } from '@/lib/edition/current/client'
@@ -26,6 +27,7 @@ export function ApiConfigTabContainer() {
     saveStatus,
     saveError,
     updateProviderApiKey,
+    saveCustomProvider,
     reorderProviders,
     deleteProvider,
     selectSlotModel,
@@ -115,6 +117,8 @@ export function ApiConfigTabContainer() {
           {workflowConcurrency && ConcurrencyPanel && (
             <ConcurrencyPanel value={workflowConcurrency} onChange={handleWorkflowConcurrencyChange} />
           )}
+
+          <CustomApiProviderForm providers={providers} onSave={saveCustomProvider} />
 
           <ApiConfigProviderList
             modelProviders={modelProviders}

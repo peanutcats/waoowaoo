@@ -41,6 +41,7 @@ export interface AiProviderManifest {
     readonly visibility: 'visible' | 'hidden'
     readonly name: string
     readonly baseUrl?: string
+    readonly customModels?: readonly UnifiedModelType[]
   }
   readonly platformCredentials?: {
     readonly envPrefix: string

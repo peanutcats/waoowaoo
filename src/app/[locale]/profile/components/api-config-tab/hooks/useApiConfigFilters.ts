@@ -44,7 +44,7 @@ export function useApiConfigFilters({ providers, models, defaultModels }: UseApi
 
   const modelProviders = useMemo(() => {
     const modelProviderIds = new Set(models.map((model) => model.provider))
-    return providers.filter((provider) => modelProviderIds.has(provider.id))
+    return providers.filter((provider) => (modelProviderIds.has(provider.id) || Boolean(provider.modelTypes?.length)))
   }, [models, providers])
 
   /** Every model of a type, providers holding a key first so the pickable ones lead. */
