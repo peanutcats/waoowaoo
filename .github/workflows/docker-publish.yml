@@ -1,6 +1,8 @@
 name: Build Custom API Images (ARM64)
 
 on:
+  push:
+    tags: ['custom-api-*']
   workflow_dispatch:
 
 env:
