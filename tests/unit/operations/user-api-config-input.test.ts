@@ -19,9 +19,10 @@ describe('API configuration save operation input', () => {
     '',
   ])('accepts a selected Assistant model through the save boundary: %s', (assistantModel) => {
     const input = { defaultModels: { assistantModel } }
-    expect(schema.parse(input)).toEqual(input)
+    expect(schema.safeParse(input)).toEqual({ success: true, data: input })
     // The operation also publishes JSON Schema to clients: keep both boundaries consistent.
-    const jsonSchema = z.toJSONSchema(schema) as {
+    if (!(schema instanceof z.ZodType)) throw new Error('Expected a Zod operation schema')
+    const jsonSchema = z.toJSONSchema(schema) as unknown as {
       properties: { defaultModels: { properties: { assistantModel: { pattern: string } } } }
     }
     expect(new RegExp(jsonSchema.properties.defaultModels.properties.assistantModel.pattern).test(assistantModel)).toBe(true)
