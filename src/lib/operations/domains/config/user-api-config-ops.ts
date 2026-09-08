@@ -4,7 +4,8 @@ import type { ProjectAgentOperationRegistryDraft } from '@/lib/operations/types'
 import { defineOperation } from '@/lib/operations/define-operation'
 import { capabilitySelectionCommandSchema } from '@/lib/ai-registry/capability-selection-command'
 
-const modelKeySchema = z.string().regex(/^(?:$|[^:]+::.+)$/)
+// Provider instances use single colons; only the double colon separates the model ID.
+const modelKeySchema = z.string().regex(/^(?:$|[^:]+(?::[^:]+)*::.+)$/)
   .describe('Exact provider::modelId key of the Assistant model. Pass an empty string to clear it.')
 
 const apiConfigInputSchema = z.object({

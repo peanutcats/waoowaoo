@@ -9,7 +9,30 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  validate-custom-api:
+    if: github.repository == 'peanutcats/waoowaoo'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      DEPLOYMENT_EDITION: self-hosted
+      BILLING_MODE: 'OFF'
+      BILLING_TEST_BOOTSTRAP: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Verify custom API save boundary and protocol regressions
+        run: npx vitest run tests/unit/operations/user-api-config-input.test.ts tests/unit/ai-providers/custom-api.test.ts tests/unit/ai-providers/custom-api-security.test.ts
+      - run: npm run typecheck
+      - run: npm run lint -- src/lib/operations/domains/config/user-api-config-ops.ts tests/unit/operations/user-api-config-input.test.ts
+
   build-and-push:
+    needs: validate-custom-api
     # Explicitly scoped to the user-owned fork; never publish the upstream superset.
     if: github.repository == 'peanutcats/waoowaoo'
     runs-on: ubuntu-24.04-arm
